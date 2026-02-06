@@ -2,26 +2,26 @@
 // MOVIE DATA
 // ======================
 const movies = [
-    { id: 1, title: "Bruce Almighty", color: "#1a472a" },
-    { id: 2, title: "Gladiator", color: "#0d3d0d" },
-    { id: 3, title: "The Life of Chuck", color: "#1a1a2e" },
-    { id: 4, title: "Groundhog Day", color: "#2d1b00" },
-    { id: 5, title: "George of the Jungle", color: "#3d1e1e" },
-    { id: 6, title: "Knives Out", color: "#2e4a2e" },
-    { id: 7, title: "Rush", color: "#1e2d3d" },
-    { id: 8, title: "The Dark Knight", color: "#0f0f0f" },
-    { id: 9, title: "The Green Mile", color: "#1a3a1a" },
-    { id: 10, title: "Leon", color: "#2d2d1a" },
-    { id: 11, title: "A Man Called Otto", color: "#1a472a" },
-    { id: 12, title: "Self/less", color: "#0d3d0d" },
-    { id: 13, title: "Night Hunter", color: "#1a1a2e" },
-    { id: 14, title: "Die My Love", color: "#2d1b00" },
-    { id: 15, title: "Roofman", color: "#3d1e1e" },
-    { id: 16, title: "For Richer or Poorer", color: "#2e4a2e" },
-    { id: 17, title: "The Pink Panther 2", color: "#1e2d3d" },
-    { id: 18, title: "57 Seconds", color: "#0f0f0f" },
-    { id: 19, title: "The Scorpion King", color: "#1a3a1a" },
-    { id: 20, title: "The Irishman", color: "#2d2d1a" },
+    { id: 1, title: "Bruce Almighty" },
+    { id: 2, title: "Gladiator" },
+    { id: 3, title: "The Life of Chuck" },
+    { id: 4, title: "Groundhog Day" },
+    { id: 5, title: "George of the Jungle" },
+    { id: 6, title: "Knives Out" },
+    { id: 7, title: "Rush" },
+    { id: 8, title: "The Dark Knight" },
+    { id: 9, title: "The Green Mile" },
+    { id: 10, title: "Leon" },
+    { id: 11, title: "A Man Called Otto" },
+    { id: 12, title: "Self/less" },
+    { id: 13, title: "Night Hunter" },
+    { id: 14, title: "Die My Love" },
+    { id: 15, title: "Roofman" },
+    { id: 16, title: "For Richer or Poorer" },
+    { id: 17, title: "The Pink Panther 2" },
+    { id: 18, title: "57 Seconds" },
+    { id: 19, title: "The Scorpion King" },
+    { id: 20, title: "The Irishman" },
 ];
 
 // ======================
@@ -120,8 +120,8 @@ function renderFrames() {
         img.onerror = () => {
             const ph = document.createElement('div');
             ph.className = 'frame-image frame-placeholder';
-            ph.style.background =
-                `linear-gradient(135deg, ${movie.color}, ${adjustColor(movie.color, 40)})`;
+            const hue = (movie.id * 137) % 360;
+            ph.style.background = `linear-gradient(135deg, hsl(${hue}, 60%, 50%), hsl(${hue}, 60%, 30%))`;
 
             const icon = document.createElement('div');
             icon.className = 'camera-icon';
@@ -172,7 +172,9 @@ function renderMovieTitles() {
 // SELECTION
 // ======================
 function selectMovie(id) {
-    resetSelection('movie');
+    document.querySelectorAll('.movie-item.selected')
+        .forEach(e => e.classList.remove('selected'));
+
     gameState.selectedMovie = id;
 
     document.querySelector(`.movie-item[data-movie-id="${id}"]`)
@@ -182,7 +184,9 @@ function selectMovie(id) {
 }
 
 function selectFrame(id) {
-    resetSelection('frame');
+    document.querySelectorAll('.frame.selected')
+        .forEach(e => e.classList.remove('selected'));
+
     gameState.selectedFrame = id;
 
     document.querySelector(`.frame[data-movie-id="${id}"]`)
@@ -209,10 +213,11 @@ function resetSelection(except = null) {
 // DRAG & DROP
 // ======================
 function handleDragStart(e) {
-    resetSelection();
-    gameState.selectedMovie = Number(e.target.dataset.movieId);
-    e.dataTransfer.setData('movieId', gameState.selectedMovie);
+    const movieId = Number(e.target.dataset.movieId);
+    gameState.selectedMovie = movieId;
+    e.dataTransfer.setData('movieId', movieId);
     e.target.classList.add('dragging');
+    e.target.classList.add('selected');
 }
 
 function handleDragEnd() {
@@ -243,7 +248,6 @@ function handleDropOnFrame(e) {
 function tryMatch() {
     if (gameState.selectedMovie && gameState.selectedFrame) {
         checkMatch(gameState.selectedMovie, gameState.selectedFrame);
-        resetSelection();
     }
 }
 
@@ -271,6 +275,10 @@ function handleCorrectMatch(movieId) {
 
     showFeedback(`Correct! +${points}`, 'success');
 
+    gameState.selectedMovie = null;
+    gameState.selectedFrame = null;
+    document.querySelectorAll('.frame.selected').forEach(e => e.classList.remove('selected'));
+
     saveGameState();
     updateScoreDisplay();
     updateProgress();
@@ -292,6 +300,11 @@ function handleIncorrectMatch(frameId) {
 
     setTimeout(() => frame?.classList.remove('incorrect'), 700);
 
+    gameState.selectedMovie = null;
+    gameState.selectedFrame = null;
+    document.querySelectorAll('.movie-item.selected').forEach(e => e.classList.remove('selected'));
+    document.querySelectorAll('.frame.selected').forEach(e => e.classList.remove('selected'));
+
     saveGameState();
     updateScoreDisplay();
 }
@@ -312,8 +325,8 @@ function updateScoreDisplay() {
 
     const streak = document.getElementById('streak');
     if (gameState.streak >= 5) {
-        streak.style.display = 'inline-flex';
-        streak.textContent = `🔥 ${gameState.streak}`;
+        streak.style.display = 'inline';
+        streak.textContent = gameState.streak;
     } else {
         streak.style.display = 'none';
     }
@@ -375,14 +388,6 @@ function loadGameState() {
 // ======================
 // UTILS
 // ======================
-function adjustColor(color, amount) {
-    const num = parseInt(color.slice(1), 16);
-    const r = Math.min(255, (num >> 16) + amount);
-    const g = Math.min(255, ((num >> 8) & 255) + amount);
-    const b = Math.min(255, (num & 255) + amount);
-    return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
-}
-
 function autoScrollOnDrag(e) {
     const scrollZone = 80; // px from top/bottom
     const scrollSpeed = 20;
@@ -419,4 +424,3 @@ document.getElementById('restartFromComplete').onclick = () => {
     openNameModal();
     updateProgress();
 };
-
