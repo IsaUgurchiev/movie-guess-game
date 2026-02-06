@@ -136,20 +136,20 @@ function renderFrames() {
         const isMobile = 'ontouchstart' in window;
 
         if (!matched) {
-            frame.addEventListener('click', (e) => {
-                e.stopPropagation();
-                selectFrame(movie.id);
-            });
-
-            if (isMobile) {
-                frame.addEventListener('touchend', (e) => {
-                    e.preventDefault();
+            if (!isMobile) {
+                frame.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     selectFrame(movie.id);
-                }, { passive: false });
-            } else {
+                });
                 frame.addEventListener('dragover', handleDragOver);
                 frame.addEventListener('dragleave', handleDragLeave);
                 frame.addEventListener('drop', handleDropOnFrame);
+            } else {
+                frame.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectFrame(movie.id);
+                }, { passive: false });
             }
         }
 
@@ -164,6 +164,8 @@ function renderMovieTitles() {
     const list = document.getElementById('moviesList');
     list.innerHTML = '';
 
+    const isMobile = 'ontouchstart' in window;
+
     [...movies].sort(() => Math.random() - 0.5).forEach(movie => {
         if (gameState.matchedPairs.includes(movie.id)) return;
 
@@ -172,23 +174,19 @@ function renderMovieTitles() {
         item.textContent = movie.title;
         item.dataset.movieId = movie.id;
 
-        const isMobile = 'ontouchstart' in window;
-
         if (!isMobile) {
             item.draggable = true;
             item.addEventListener('dragstart', handleDragStart);
             item.addEventListener('dragend', handleDragEnd);
-        }
-
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            selectMovie(movie.id);
-        });
-
-        if (isMobile) {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                selectMovie(movie.id);
+            });
+        } else {
             item.addEventListener('touchend', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 selectMovie(movie.id);
             }, { passive: false });
         }
