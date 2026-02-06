@@ -133,11 +133,24 @@ function renderFrames() {
 
         frame.appendChild(img);
 
+        const isMobile = 'ontouchstart' in window;
+
         if (!matched) {
-            frame.addEventListener('click', () => selectFrame(movie.id));
-            frame.addEventListener('dragover', handleDragOver);
-            frame.addEventListener('dragleave', handleDragLeave);
-            frame.addEventListener('drop', handleDropOnFrame);
+            frame.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectFrame(movie.id);
+            });
+
+            if (isMobile) {
+                frame.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    selectFrame(movie.id);
+                }, { passive: false });
+            } else {
+                frame.addEventListener('dragover', handleDragOver);
+                frame.addEventListener('dragleave', handleDragLeave);
+                frame.addEventListener('drop', handleDropOnFrame);
+            }
         }
 
         grid.appendChild(frame);
@@ -158,11 +171,27 @@ function renderMovieTitles() {
         item.className = 'movie-item';
         item.textContent = movie.title;
         item.dataset.movieId = movie.id;
-        item.draggable = true;
 
-        item.addEventListener('click', () => selectMovie(movie.id));
-        item.addEventListener('dragstart', handleDragStart);
-        item.addEventListener('dragend', handleDragEnd);
+        const isMobile = 'ontouchstart' in window;
+
+        if (!isMobile) {
+            item.draggable = true;
+            item.addEventListener('dragstart', handleDragStart);
+            item.addEventListener('dragend', handleDragEnd);
+        }
+
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            selectMovie(movie.id);
+        });
+
+        if (isMobile) {
+            item.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                selectMovie(movie.id);
+            }, { passive: false });
+        }
 
         list.appendChild(item);
     });
@@ -275,6 +304,7 @@ function handleCorrectMatch(movieId) {
 
     showFeedback(`Correct! +${points}`, 'success');
 
+    // Сбрасываем выбор после правильного совпадения
     gameState.selectedMovie = null;
     gameState.selectedFrame = null;
     document.querySelectorAll('.frame.selected').forEach(e => e.classList.remove('selected'));
@@ -300,6 +330,7 @@ function handleIncorrectMatch(frameId) {
 
     setTimeout(() => frame?.classList.remove('incorrect'), 700);
 
+    // Сбрасываем выбор после неправильного совпадения
     gameState.selectedMovie = null;
     gameState.selectedFrame = null;
     document.querySelectorAll('.movie-item.selected').forEach(e => e.classList.remove('selected'));
@@ -389,7 +420,7 @@ function loadGameState() {
 // UTILS
 // ======================
 function autoScrollOnDrag(e) {
-    const scrollZone = 80; // px from top/bottom
+    const scrollZone = 80;
     const scrollSpeed = 20;
 
     const y = e.clientY;
@@ -401,6 +432,7 @@ function autoScrollOnDrag(e) {
         window.scrollBy(0, scrollSpeed);
     }
 }
+
 
 
 document.getElementById('closeCompleteModal').onclick = () => {
